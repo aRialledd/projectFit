@@ -1,0 +1,1303 @@
+<!DOCTYPE html>
+<html lang="tr">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Fitness Aktivite Takibi</title>
+    <script src="https://cdn.tailwindcss.com/3.4.16"></script>
+    <script>
+      tailwind.config = {
+        theme: {
+          extend: {
+            colors: { primary: "#4F46E5", secondary: "#10B981" },
+            borderRadius: {
+              none: "0px",
+              sm: "4px",
+              DEFAULT: "8px",
+              md: "12px",
+              lg: "16px",
+              xl: "20px",
+              "2xl": "24px",
+              "3xl": "32px",
+              full: "9999px",
+              button: "8px",
+            },
+          },
+        },
+      };
+    </script>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Pacifico&display=swap"
+      rel="stylesheet"
+    />
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/remixicon/4.6.0/remixicon.min.css"
+    />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/echarts/5.5.0/echarts.min.js"></script>
+    
+    <style>
+      :where([class^="ri-"])::before { content: "\f3c2"; }
+      input[type="number"]::-webkit-inner-spin-button,
+      input[type="number"]::-webkit-outer-spin-button {
+      -webkit-appearance: none;
+      appearance: none;
+      margin: 0;
+      }
+      input[type="number"] {
+      -moz-appearance: textfield;
+      appearance: textfield;
+      }
+      .custom-checkbox {
+      display: flex;
+      align-items: center;
+      position: relative;
+      cursor: pointer;
+      }
+      .custom-checkbox input {
+      position: absolute;
+      opacity: 0;
+      cursor: pointer;
+      }
+      .checkmark {
+      height: 20px;
+      width: 20px;
+      background-color: #fff;
+      border: 2px solid #e2e8f0;
+      border-radius: 4px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      }
+      .custom-checkbox input:checked ~ .checkmark {
+      background-color: #4F46E5;
+      border-color: #4F46E5;
+      }
+      .checkmark:after {
+      content: "";
+      display: none;
+      width: 5px;
+      height: 10px;
+      border: solid white;
+      border-width: 0 2px 2px 0;
+      transform: rotate(45deg);
+      }
+      .custom-checkbox input:checked ~ .checkmark:after {
+      display: block;
+      }
+      .custom-switch {
+      position: relative;
+      display: inline-block;
+      width: 50px;
+      height: 24px;
+      }
+      .custom-switch input {
+      opacity: 0;
+      width: 0;
+      height: 0;
+      }
+      .slider {
+      position: absolute;
+      cursor: pointer;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background-color: #e2e8f0;
+      transition: .4s;
+      border-radius: 24px;
+      }
+      .slider:before {
+      position: absolute;
+      content: "";
+      height: 18px;
+      width: 18px;
+      left: 3px;
+      bottom: 3px;
+      background-color: white;
+      transition: .4s;
+      border-radius: 50%;
+      }
+      input:checked + .slider {
+      background-color: #4F46E5;
+      }
+      input:checked + .slider:before {
+      transform: translateX(26px);
+      }
+      .custom-range {
+      -webkit-appearance: none;
+      width: 100%;
+      height: 6px;
+      border-radius: 5px;
+      background: #e2e8f0;
+      outline: none;
+      }
+      .custom-range::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 18px;
+      height: 18px;
+      border-radius: 50%;
+      background: #4F46E5;
+      cursor: pointer;
+      }
+      .custom-range::-moz-range-thumb {
+      width: 18px;
+      height: 18px;
+      border-radius: 50%;
+      background: #4F46E5;
+      cursor: pointer;
+      border: none;
+      }
+      
+    </style>
+  </head>
+  <body class="bg-gray-50 min-h-screen">
+    <!-- Delete Confirmation Modal -->
+    <div
+      id="deleteConfirmModal"
+      class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50"
+    >
+      <div class="bg-white rounded-lg p-6 max-w-sm w-full mx-4">
+        <div class="text-center mb-6">
+          <div
+            class="w-12 h-12 rounded-full bg-red-100 text-red-600 flex items-center justify-center mx-auto mb-4"
+          >
+            <i class="ri-error-warning-line text-xl"></i>
+          </div>
+          <h3 class="text-lg font-semibold text-gray-800 mb-2">
+            Aktiviteyi Sil
+          </h3>
+          <p class="text-gray-600">
+            Bu aktiviteyi silmek istediğinizden emin misiniz?
+          </p>
+        </div>
+        <div class="flex space-x-3">
+          <button
+            id="cancelDelete"
+            class="flex-1 px-4 py-2 bg-gray-100 text-gray-700 rounded-button hover:bg-gray-200 transition-colors whitespace-nowrap"
+          >
+            İptal
+          </button>
+          <button
+            id="confirmDelete"
+            class="flex-1 px-4 py-2 bg-red-600 text-white rounded-button hover:bg-red-700 transition-colors whitespace-nowrap"
+          >
+            Sil
+          </button>
+        </div>
+      </div>
+    </div>
+    <!-- Header -->
+    <header class="bg-white shadow-sm">
+      <div
+        id="initialHeader"
+        class="container mx-auto px-4 py-20 flex flex-col items-center justify-center min-h-[calc(100vh-80px)]"
+      >
+        <h1 class="text-4xl font-['Serif'] text-primary mb-8">PROJECTFIT</h1>
+        <div class="flex items-center space-x-4">
+          <button
+            id="loginBtn"
+            class="text-lg text-gray-600 px-6 py-3 border border-gray-200 rounded-button whitespace-nowrap hover:bg-gray-50"
+          >
+            Giriş Yap
+          </button>
+          <button
+            id="registerBtn"
+            class="text-lg text-white px-6 py-3 bg-primary rounded-button whitespace-nowrap hover:bg-primary/90"
+          >
+            Kayıt Ol
+          </button>
+        </div>
+      </div>
+      <div
+        id="mainHeader"
+        class="container mx-auto px-4 py-4 flex justify-between items-center hidden"
+      >
+        <div class="flex items-center">
+          <h1 class="text-2xl font-['Serif'] text-primary">PROJECTFIT</h1>
+        </div>
+        <div class="flex items-center space-x-4">
+          <div class="relative">
+            <input
+              type="date"
+              class="text-sm text-gray-700 px-3 py-2 border border-gray-200 rounded focus:outline-none focus:ring-2 focus:ring-primary/20"
+            />
+          </div>
+          <div id="userProfile">
+            <div class="flex items-center space-x-2">
+              <span id="userName" class="text-sm text-gray-700"></span>
+              <button
+                id="logoutBtn"
+                class="text-sm text-gray-600 hover:text-gray-800"
+              >
+                <i class="ri-logout-box-r-line"></i>
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </header>
+    <!-- Login Modal -->
+    <div
+      id="loginModal"
+      class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50"
+    >
+      <div class="bg-white rounded-lg p-8 max-w-md w-full mx-4">
+        <div class="flex justify-between items-center mb-6">
+          <h2 class="text-2xl font-semibold text-gray-800">Giriş Yap</h2>
+          <button class="closeModal text-gray-600 hover:text-gray-800">
+            <i class="ri-close-line text-xl"></i>
+          </button>
+        </div>
+        <form id="loginForm" class="space-y-4">
+          <div>
+            <label
+              for="loginUsername"
+              class="block text-sm font-medium text-gray-700 mb-1"
+              >Kullanıcı Adı</label
+            >
+            <input
+              type="text"
+              id="loginUsername"
+              name="username"
+              class="w-full text-sm text-gray-700 px-3 py-2 border border-gray-200 rounded focus:outline-none focus:ring-2 focus:ring-primary/20"
+              required
+            />
+          </div>
+          <div>
+            <label
+              for="loginPassword"
+              class="block text-sm font-medium text-gray-700 mb-1"
+              >Şifre</label
+            >
+            <input
+              type="password"
+              id="loginPassword"
+              name="password"
+              class="w-full text-sm text-gray-700 px-3 py-2 border border-gray-200 rounded focus:outline-none focus:ring-2 focus:ring-primary/20"
+              required
+            />
+          </div>
+          <button
+            type="submit"
+            class="w-full bg-primary text-white px-4 py-2 rounded-button whitespace-nowrap hover:bg-primary/90 transition-colors"
+          >
+            Giriş Yap
+          </button>
+        </form>
+      </div>
+    </div>
+    <!-- Register Modal -->
+    <div
+      id="registerModal"
+      class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50"
+    >
+      <div class="bg-white rounded-lg p-8 max-w-md w-full mx-4">
+        <div class="flex justify-between items-center mb-6">
+          <h2 class="text-2xl font-semibold text-gray-800">Kayıt Ol</h2>
+          <button class="closeModal text-gray-600 hover:text-gray-800">
+            <i class="ri-close-line text-xl"></i>
+          </button>
+        </div>
+        <form id="registerForm" class="space-y-4">
+          <div>
+            <label
+              for="registerUsername"
+              class="block text-sm font-medium text-gray-700 mb-1"
+              >Kullanıcı Adı</label
+            >
+            <input
+              type="text"
+              id="registerUsername"
+              name="username"
+              class="w-full text-sm text-gray-700 px-3 py-2 border border-gray-200 rounded focus:outline-none focus:ring-2 focus:ring-primary/20"
+              required
+            />
+          </div>
+          <div>
+            <label
+              for="registerName"
+              class="block text-sm font-medium text-gray-700 mb-1"
+              >Ad Soyad</label
+            >
+            <input
+              type="text"
+              id="registerName"
+              name="name"
+              class="w-full text-sm text-gray-700 px-3 py-2 border border-gray-200 rounded focus:outline-none focus:ring-2 focus:ring-primary/20"
+              required
+            />
+          </div>
+          <div>
+            <label
+              for="registerPassword"
+              class="block text-sm font-medium text-gray-700 mb-1"
+              >Şifre</label
+            >
+            <input
+              type="password"
+              id="registerPassword"
+              name="password"
+              class="w-full text-sm text-gray-700 px-3 py-2 border border-gray-200 rounded focus:outline-none focus:ring-2 focus:ring-primary/20"
+              required
+            />
+          </div>
+          <button
+            type="submit"
+            class="w-full bg-primary text-white px-4 py-2 rounded-button whitespace-nowrap hover:bg-primary/90 transition-colors"
+          >
+            Kayıt Ol
+          </button>
+        </form>
+      </div>
+    </div>
+    <main class="container mx-auto px-4 py-8">
+      <h1 class="text-3xl font-bold text-gray-800 mb-8">
+        Fitness Aktivite Takibi
+      </h1>
+      <!-- Dashboard Cards -->
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+        <div class="bg-white p-6 rounded shadow-sm border border-gray-100">
+          <div class="flex items-center mb-2">
+            <div
+              class="w-10 h-10 flex items-center justify-center bg-primary/10 rounded-full text-primary"
+            >
+              <i class="ri-fire-line"></i>
+            </div>
+            <h3 class="ml-3 text-lg font-medium text-gray-700">
+              Toplam Kalori
+            </h3>
+          </div>
+          <p class="text-3xl font-bold text-gray-900">
+            0 <span class="text-lg font-normal text-gray-500">kcal</span>
+          </p>
+        </div>
+        <div class="bg-white p-6 rounded shadow-sm border border-gray-100">
+          <div class="flex items-center mb-2">
+            <div
+              class="w-10 h-10 flex items-center justify-center bg-secondary/10 rounded-full text-secondary"
+            >
+              <i class="ri-time-line"></i>
+            </div>
+            <h3 class="ml-3 text-lg font-medium text-gray-700">Toplam Süre</h3>
+          </div>
+          <p class="text-3xl font-bold text-gray-900">
+            0 <span class="text-lg font-normal text-gray-500">dakika</span>
+          </p>
+        </div>
+        <div class="bg-white p-6 rounded shadow-sm border border-gray-100">
+          <div class="flex items-center mb-2">
+            <div
+              class="w-10 h-10 flex items-center justify-center bg-purple-100 rounded-full text-purple-600"
+            >
+              <i class="ri-checkbox-circle-line"></i>
+            </div>
+            <h3 class="ml-3 text-lg font-medium text-gray-700">Aktiviteler</h3>
+          </div>
+          <p class="text-3xl font-bold text-gray-900">
+            0 <span class="text-lg font-normal text-gray-500">tamamlandı</span>
+          </p>
+        </div>
+      </div>
+      <!-- Activity Form -->
+      <div class="bg-white p-6 rounded shadow-sm border border-gray-100 mb-8">
+        <h2 class="text-xl font-semibold text-gray-800 mb-4">
+          Yeni Aktivite Ekle
+        </h2>
+        <form id="activityForm" class="grid grid-cols-1 md:grid-cols-4 gap-4">
+          <div>
+            <label
+              for="activityType"
+              class="block text-sm font-medium text-gray-700 mb-1"
+              >Aktivite Türü</label
+            >
+            <div class="relative">
+              <select
+                id="activityType"
+                class="w-full text-sm text-gray-700 px-3 py-2 border border-gray-200 rounded pr-8 focus:outline-none focus:ring-2 focus:ring-primary/20"
+              >
+                <option value="koşu">Koşu</option>
+                <option value="yürüyüş">Yürüyüş</option>
+                <option value="bisiklet">Bisiklet</option>
+                <option value="yüzme">Yüzme</option>
+                <option value="yoga">Yoga</option>
+                <option value="pilates">Pilates</option>
+                <option value="ağırlık">Ağırlık Çalışması</option>
+                <option value="dans">Dans</option>
+              </select>
+              <div
+                class="absolute inset-y-0 right-0 flex items-center pr-2 pointer-events-none"
+              >
+                <i class="ri-arrow-down-s-line text-gray-400"></i>
+              </div>
+            </div>
+          </div>
+          <div>
+            <label
+              for="duration"
+              class="block text-sm font-medium text-gray-700 mb-1"
+              >Süre (dakika)</label
+            >
+            <input
+              type="number"
+              id="duration"
+              min="1"
+              class="w-full text-sm text-gray-700 px-3 py-2 border border-gray-200 rounded focus:outline-none focus:ring-2 focus:ring-primary/20"
+              placeholder="Örn: 30"
+            />
+          </div>
+          <div>
+            <label
+              for="calories"
+              class="block text-sm font-medium text-gray-700 mb-1"
+              >Kalori (kcal)</label
+            >
+            <input
+              type="number"
+              id="calories"
+              min="1"
+              class="w-full text-sm text-gray-700 px-3 py-2 border border-gray-200 rounded focus:outline-none focus:ring-2 focus:ring-primary/20"
+              placeholder="Örn: 150"
+            />
+          </div>
+          <div class="flex items-end">
+            <button
+              type="submit"
+              class="w-full bg-primary text-white px-4 py-2 rounded-button whitespace-nowrap hover:bg-primary/90 transition-colors"
+            >
+              <i class="ri-add-line mr-1"></i> Aktivite Ekle
+            </button>
+          </div>
+        </form>
+      </div>
+      <!-- Charts -->
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+        <div class="bg-white p-6 rounded shadow-sm border border-gray-100">
+          <h2 class="text-xl font-semibold text-gray-800 mb-4">
+            Aktivite Süreleri
+          </h2>
+          <div id="activityChart" class="w-full h-80"></div>
+        </div>
+        <div class="bg-white p-6 rounded shadow-sm border border-gray-100">
+          <h2 class="text-xl font-semibold text-gray-800 mb-4">
+            Haftalık Kalori Yakımı
+          </h2>
+          <div id="calorieChart" class="w-full h-80"></div>
+        </div>
+      </div>
+      <!-- Activity List -->
+      <div class="bg-white p-6 rounded shadow-sm border border-gray-100">
+        <div class="flex justify-between items-center mb-4">
+          <h2 class="text-xl font-semibold text-gray-800">Aktivite Geçmişi</h2>
+          <div class="flex space-x-2">
+            <button
+              class="text-sm text-gray-600 px-3 py-1.5 border border-gray-200 rounded-button whitespace-nowrap hover:bg-gray-50"
+            >
+              <i class="ri-filter-3-line mr-1"></i> Filtrele
+            </button>
+            <div id="filterBox" class="mb-4 hidden">
+  <select id="filterType" class="border px-2 py-1 rounded">
+    <option value="">Tümü</option>
+    <option value="koşu">Koşu</option>
+    <option value="yürüyüş">Yürüyüş</option>
+    <option value="bisiklet">Bisiklet</option>
+    <option value="yüzme">Yüzme</option>
+    <option value="yoga">Yoga</option>
+    <option value="pilates">Pilates</option>
+    <option value="ağırlık">Ağırlık Çalışması</option>
+    <option value="dans">Dans</option>
+  </select>
+</div>
+          
+          </div>
+        </div>
+        <div class="overflow-x-auto">
+          <table class="min-w-full divide-y divide-gray-200">
+            <thead>
+              <tr>
+                <th
+                  class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                >
+                  Aktivite
+                </th>
+                <th
+                  class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                >
+                  Süre
+                </th>
+                <th
+                  class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                >
+                  Kalori
+                </th>
+                <th
+                  class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                >
+                  Tarih & Saat
+                </th>
+                <th
+                  class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                >
+                  İşlemler
+                </th>
+              </tr>
+            </thead>
+            <tbody
+              class="bg-white divide-y divide-gray-200"
+              id="activityTableBody"
+            >
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </main>
+    <footer class="bg-white border-t border-gray-200 mt-12">
+      <div class="container mx-auto px-4 py-8">
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+          <div>
+            <h3 class="text-lg font-arial text-gray-800 mb-3">Hakkımızda</h3>
+            <p class="text-gray-600 text-sm">
+             PROJECTFIT , fitness aktivitelerinizi takip etmenizi sağlayan
+              kullanıcı dostu bir platformdur. Aktivite sürelerinizi, kalori
+              yakımınızı ve genel performansınızı izleyerek sağlıklı bir yaşam
+              tarzı benimsemenize yardımcı olur. Amacımız, spor yapmayı daha
+              eğlenceli ve motive edici hale getirmektir. Fitness yolculuğunuzda
+              size rehberlik etmek için buradayız. Her adımda yanınızdayız!
+            </p>
+          </div>
+          <div>
+            <h3 class="text-lg font-semibold text-gray-800 mb-3">
+              Hızlı Bağlantılar
+            </h3>
+            <ul class="space-y-2">
+              <li>
+                <a href="#" class="text-primary hover:underline text-sm"
+                  >Anasayfa</a
+                >
+              </li>
+              <li>
+                <a href="#" class="text-primary hover:underline text-sm"
+                  >Aktiviteler</a
+                >
+              </li>
+              <li>
+                <a href="#" class="text-primary hover:underline text-sm"
+                  >İstatistikler</a
+                >
+              </li>
+              <li>
+                <a href="#" class="text-primary hover:underline text-sm"
+                  >Ayarlar</a
+                >
+              </li>
+            </ul>
+          </div>
+          <div>
+            <h3 class="text-lg font-semibold text-gray-800 mb-3">
+              Bizi Takip Edin
+            </h3>
+            
+            <p class="text-gray-600 text-sm mt-4">
+              İletişim:
+              <a href="mailto:info@fitnesstakip.com" class="text-primary"
+                >info@fitnesstakip.com</a
+
+              Adres: 123 Fitness Sokak, Spor Mahallesi, İstanbul
+              >
+            </p>
+          </div>
+        </div>
+        <div class="border-t border-gray-200 mt-8 pt-6 text-center">
+          <p class="text-gray-600 text-sm">
+            Hazırlayan: Abdulkadir Alpaslan Çakmakcı , Burak Acar , Furkan Emir Uzun
+            © 2025 PROJECTFIT. Tüm hakları saklıdır.
+          </p>
+        </div>
+      </div>
+      <div id="settingsModal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50">
+  <div class="bg-white rounded-lg p-8 max-w-md w-full mx-4">
+    <div class="flex justify-between items-center mb-6">
+      <h2 class="text-2xl font-semibold text-gray-800">Hesap Ayarları</h2>
+      <button id="closeSettings" class="text-gray-600 hover:text-gray-800">
+        <i class="ri-close-line text-xl"></i>
+      </button>
+    </div>
+    <form id="changePasswordForm" class="space-y-4 mb-4">
+      <div>
+        <label for="newPassword" class="block text-sm font-medium text-gray-700 mb-1">Yeni Şifre</label>
+        <input type="password" id="newPassword" class="w-full text-sm text-gray-700 px-3 py-2 border border-gray-200 rounded focus:outline-none focus:ring-2 focus:ring-primary/20" required />
+      </div>
+      <button type="submit" class="w-full bg-primary text-white px-4 py-2 rounded-button hover:bg-primary/90 transition-colors">Şifreyi Değiştir</button>
+    </form>
+    <hr class="my-4">
+    <button id="deleteAccountBtn" class="w-full bg-red-600 text-white px-4 py-2 rounded-button hover:bg-red-700 transition-colors">Hesabı Sil</button>
+  </div>
+</div>
+    </footer>
+    <script>
+document.addEventListener("DOMContentLoaded", function () {
+  // Ayarlar modalı açma
+  document.querySelectorAll('a[href="#"][class*="text-primary"]').forEach(link => {
+    if (link.textContent.trim().toLowerCase().includes("ayar")) {
+      link.addEventListener("click", function (e) {
+        e.preventDefault();
+        document.getElementById("settingsModal").classList.remove("hidden");
+        document.getElementById("settingsModal").classList.add("flex");
+      });
+    }
+  });
+
+  // Ayarlar modalı kapama
+  document.getElementById("closeSettings").addEventListener("click", function () {
+    document.getElementById("settingsModal").classList.add("hidden");
+    document.getElementById("settingsModal").classList.remove("flex");
+  });
+
+  // Şifre değiştirme
+  document.getElementById("changePasswordForm").addEventListener("submit", function (e) {
+  e.preventDefault();
+  const newPassword = document.getElementById("newPassword").value;
+  let users = JSON.parse(localStorage.getItem("users")) || [];
+  let currentUser = JSON.parse(localStorage.getItem("currentUser"));
+  if (!currentUser) return;
+  users = users.map(u => u.username === currentUser.username ? { ...u, password: newPassword } : u);
+  localStorage.setItem("users", JSON.stringify(users));
+  currentUser.password = newPassword;
+  localStorage.setItem("currentUser", JSON.stringify(currentUser));
+  // --- EKLE ---
+  window.users = users; // Global users değişkenini güncelle
+  // -------------
+  alert("Şifre başarıyla değiştirildi!");
+  this.reset();
+  document.getElementById("settingsModal").classList.add("hidden");
+  document.getElementById("settingsModal").classList.remove("flex");
+});
+ window.users = users; // Global users değişkenini güncelle
+
+  // Hesap silme
+  document.getElementById("deleteAccountBtn").addEventListener("click", function () {
+    if (!confirm("Hesabınızı silmek istediğinize emin misiniz? Bu işlem geri alınamaz!")) return;
+    let users = JSON.parse(localStorage.getItem("users")) || [];
+    let currentUser = JSON.parse(localStorage.getItem("currentUser"));
+    if (!currentUser) return;
+    users = users.filter(u => u.username !== currentUser.username);
+    localStorage.setItem("users", JSON.stringify(users));
+    localStorage.removeItem("currentUser");
+    localStorage.removeItem("activities_" + currentUser.username);
+    alert("Hesabınız silindi!");
+    window.location.reload();
+  });
+});
+</script>
+    <script id="activityChartScript">
+  let activityChart;
+  let activityData = [];
+  document.addEventListener("DOMContentLoaded", function () {
+    
+      const filterBtn = document.querySelector('button:has(.ri-filter-3-line)');
+  const filterBox = document.getElementById("filterBox");
+  const filterType = document.getElementById("filterType");
+  const activityTableBody = document.getElementById("activityTableBody");
+
+  if (filterBtn && filterBox) {
+    filterBtn.addEventListener("click", function () {
+      filterBox.classList.toggle("hidden");
+    });
+  }
+
+  if (filterType) {
+    filterType.addEventListener("change", function () {
+      const value = this.value;
+      const rows = activityTableBody.querySelectorAll("tr");
+      rows.forEach(row => {
+        const typeCell = row.querySelector(".font-medium");
+        if (!typeCell) return;
+        const type = typeCell.textContent.trim().toLowerCase();
+        if (!value || type === value) {
+          row.style.display = "";
+        } else {
+          row.style.display = "none";
+        }
+      });
+    });
+  }
+    const activityChartDom = document.getElementById("activityChart");
+    activityChart = echarts.init(activityChartDom);
+    const activityOption = {
+      animation: false,
+      tooltip: {
+        trigger: "item",
+        backgroundColor: "rgba(255, 255, 255, 0.8)",
+        borderColor: "#eee",
+        textStyle: {
+          color: "#1f2937",
+        },
+      },
+      legend: {
+        orient: "vertical",
+        right: 10,
+        top: "center",
+        textStyle: {
+          color: "#1f2937",
+        },
+      },
+      title: {
+        text: "Aktivite Süreleri",
+        left: "center",
+        top: 10,
+        textStyle: {
+          fontFamily: "Inter, Arial, Helvetica, sans-serif",
+          fontWeight: "bold",
+          fontSize: 22,
+          color: "#1f2937",
+          letterSpacing: 0.01,
+        },
+      },
+      series: [
+        {
+          name: "Aktivite Süresi",
+          type: "pie",
+          radius: ["40%", "70%"],
+          avoidLabelOverlap: false,
+          itemStyle: {
+            borderRadius: 8,
+            borderColor: "#fff",
+            borderWidth: 2,
+          },
+          label: {
+            show: false,
+            position: "center",
+          },
+          emphasis: {
+            label: {
+              show: true,
+              fontSize: 16,
+              fontWeight: "bold",
+              formatter: "{b}: {c} dk ({d}%)",
+            },
+          },
+          labelLine: {
+            show: false,
+          },
+          data: [],
+        },
+      ],
+    };
+    activityChart.setOption(activityOption);
+    window.addEventListener("resize", function () {
+      activityChart.resize();
+    });
+  });
+</script>
+    <script id="calorieChartScript">
+      let calorieChart;
+      let calorieData = Array(7).fill(0);
+      let totalCalories = 0;
+      let totalDuration = 0;
+      let totalActivities = 0;
+      document.addEventListener("DOMContentLoaded", function () {
+        const calorieChartDom = document.getElementById("calorieChart");
+        calorieChart = echarts.init(calorieChartDom);
+        const calorieOption = {
+          animation: false,
+          tooltip: {
+            trigger: "axis",
+            backgroundColor: "rgba(255, 255, 255, 0.8)",
+            borderColor: "#eee",
+            textStyle: {
+              color: "#1f2937",
+            },
+          },
+          grid: {
+            left: "3%",
+            right: "4%",
+            bottom: "3%",
+            top: "3%",
+            containLabel: true,
+          },
+          xAxis: {
+            type: "category",
+            boundaryGap: false,
+            data: [
+              "14 Haz",
+              "15 Haz",
+              "16 Haz",
+              "17 Haz",
+              "18 Haz",
+              "19 Haz",
+              "20 Haz",
+            ],
+            axisLine: {
+              lineStyle: {
+                color: "#e2e8f0",
+              },
+            },
+            axisLabel: {
+              color: "#64748b",
+            },
+          },
+          yAxis: {
+            type: "value",
+            axisLine: {
+              show: false,
+            },
+            axisLabel: {
+              color: "#64748b",
+            },
+            splitLine: {
+              lineStyle: {
+                color: "#e2e8f0",
+              },
+            },
+          },
+          series: [
+            {
+              name: "Yakılan Kalori",
+              type: "line",
+              smooth: true,
+              symbol: "none",
+              lineStyle: {
+                width: 3,
+                color: "rgba(87, 181, 231, 1)",
+              },
+              areaStyle: {
+                color: {
+                  type: "linear",
+                  x: 0,
+                  y: 0,
+                  x2: 0,
+                  y2: 1,
+                  colorStops: [
+                    {
+                      offset: 0,
+                      color: "rgba(87, 181, 231, 0.3)",
+                    },
+                    {
+                      offset: 1,
+                      color: "rgba(87, 181, 231, 0.05)",
+                    },
+                  ],
+                },
+              },
+              data: [0, 0, 0, 0, 0, 0, 0],
+            },
+          ],
+        };
+        calorieChart.setOption(calorieOption);
+        window.addEventListener("resize", function () {
+          calorieChart.resize();
+        });
+      });
+    </script>
+    <script id="authScript">
+  document.addEventListener("DOMContentLoaded", function () {
+     const dateInput = document.querySelector('input[type="date"]');
+  if (dateInput) {
+    const today = new Date();
+    const yyyy = today.getFullYear();
+    const mm = String(today.getMonth() + 1).padStart(2, '0');
+    const dd = String(today.getDate()).padStart(2, '0');
+    dateInput.value = `${yyyy}-${mm}-${dd}`;
+  }
+    const loginBtn = document.getElementById("loginBtn");
+    const registerBtn = document.getElementById("registerBtn");
+    const loginModal = document.getElementById("loginModal");
+    const registerModal = document.getElementById("registerModal");
+    const userName = document.getElementById("userName");
+    const logoutBtn = document.getElementById("logoutBtn");
+    const closeModals = document.querySelectorAll(".closeModal");
+    updateUIForLoggedOutUser()
+
+    window.currentUser = null;
+    let users = JSON.parse(localStorage.getItem("users")) || [];
+
+    function showModal(modal) {
+      modal.classList.remove("hidden");
+      modal.classList.add("flex");
+    }
+
+    function hideModal(modal) {
+      modal.classList.add("hidden");
+      modal.classList.remove("flex");
+    }
+
+    function showNotification(msg, type = "success") {
+      const n = document.createElement("div");
+      n.className = `fixed top-4 right-4 z-50 px-4 py-2 rounded text-sm shadow ${type === "error" ? "bg-red-100 text-red-700 border border-red-400" : "bg-green-100 text-green-700 border border-green-400"}`;
+      n.textContent = msg;
+      document.body.appendChild(n);
+      setTimeout(() => n.remove(), 3000);
+    }
+
+    // --- EN ÖNEMLİ KISIM: KULLANICI GİRİŞİNDE AKTİVİTELERİ YENİDEN YÜKLE ---
+    function updateUIForLoggedInUser(user) {
+      document.getElementById("initialHeader").classList.add("hidden");
+      document.getElementById("mainHeader").classList.remove("hidden");
+      document.querySelector("main").classList.remove("hidden");
+      document.querySelector("footer").classList.remove("hidden");
+      userName.textContent = user.name;
+
+      // Tüm özet ve grafik verilerini sıfırla
+      activityData = [];
+      calorieData = Array(7).fill(0);
+      totalCalories = 0;
+      totalDuration = 0;
+      totalActivities = 0;
+      document.querySelectorAll(".text-3xl.font-bold.text-gray-900").forEach((el, index) => {
+        el.innerHTML = `0 <span class="text-lg font-normal text-gray-500">${index === 0 ? "kcal" : index === 1 ? "dakika" : "tamamlandı"}</span>`;
+      });
+      document.getElementById("activityTableBody").innerHTML = "";
+      activityChart.setOption({ series: [{ data: [] }] });
+      calorieChart.setOption({ series: [{ data: Array(7).fill(0) }] });
+
+      // KAYITLI AKTİVİTELERİ YENİDEN TABLOYA VE GRAFİKLERE EKLE
+      let userActivities = JSON.parse(localStorage.getItem("activities_" + user.username)) || [];
+      userActivities.forEach((item) => {
+        const iconInfo = window.activityIcons[item.activityType] || { icon: "ri-question-line", bgColor: "bg-gray-100", textColor: "text-gray-600" };
+        const newRow = document.createElement("tr");
+        newRow.innerHTML = `
+          <td class="px-4 py-3 whitespace-nowrap">
+            <div class="flex items-center">
+              <div class="w-8 h-8 flex items-center justify-center ${iconInfo.bgColor} rounded-full ${iconInfo.textColor} mr-3">
+                <i class="${iconInfo.icon}"></i>
+              </div>
+              <span class="text-sm font-medium text-gray-900">${item.activityType.charAt(0).toUpperCase() + item.activityType.slice(1)}</span>
+            </div>
+          </td>
+          <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-700">${item.duration} dakika</td>
+          <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-700">${item.calories} kcal</td>
+          <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-700">${item.formattedDate}</td>
+          <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-700">
+            <div class="flex space-x-2">
+              <button class="text-blue-600 hover:text-blue-800"><i class="ri-edit-line"></i></button>
+              <button class="text-red-600 hover:text-red-800"><i class="ri-delete-bin-line"></i></button>
+            </div>
+          </td>
+        `;
+        document.getElementById("activityTableBody").appendChild(newRow);
+        window.updateCharts(item.activityType, Number(item.duration), Number(item.calories));
+        const deleteButton = newRow.querySelector(".text-red-600");
+        deleteButton.addEventListener("click", () => showDeleteModal(newRow));
+      });
+    }
+
+    function updateUIForLoggedOutUser() {
+      document.getElementById("initialHeader").classList.remove("hidden");
+      document.getElementById("mainHeader").classList.add("hidden");
+      document.querySelector("main").classList.add("hidden");
+      document.querySelector("footer").classList.add("hidden");
+      userName.textContent = "";
+    }
+
+    loginBtn.addEventListener("click", () => showModal(loginModal));
+    registerBtn.addEventListener("click", () => showModal(registerModal));
+    closeModals.forEach(btn => {
+      btn.addEventListener("click", () => {
+        hideModal(loginModal);
+        hideModal(registerModal);
+      });
+    });
+
+    document.getElementById("registerForm").addEventListener("submit", function (e) {
+      e.preventDefault();
+      const username = document.getElementById("registerUsername").value;
+      const name = document.getElementById("registerName").value;
+      const password = document.getElementById("registerPassword").value;
+
+      if (users.find(u => u.username === username)) {
+        showNotification("Bu kullanıcı adı zaten var!", "error");
+        return;
+      }
+
+      const newUser = { username, name, password };
+      users.push(newUser);
+      localStorage.setItem("users", JSON.stringify(users));
+      this.reset();
+      hideModal(registerModal);
+      showModal(loginModal);
+      showNotification("Kayıt başarılı. Giriş yapabilirsiniz.");
+    });
+
+    document.getElementById("loginForm").addEventListener("submit", function (e) {
+      e.preventDefault();
+      const username = document.getElementById("loginUsername").value;
+      const password = document.getElementById("loginPassword").value;
+
+      const foundUser = users.find(u => u.username === username && u.password === password);
+      if (!foundUser) {
+        showNotification("Kullanıcı adı veya şifre hatalı!", "error");
+        return;
+      }
+
+      window.currentUser = foundUser;
+      localStorage.setItem("currentUser", JSON.stringify(foundUser));
+      hideModal(loginModal);
+      updateUIForLoggedInUser(foundUser);
+      this.reset();
+      showNotification("Giriş başarılı!");
+    });
+
+    logoutBtn.addEventListener("click", () => {
+     window.currentUser = null;
+     localStorage.removeItem("currentUser");
+      updateUIForLoggedOutUser();
+      showNotification("Çıkış yapıldı.");
+       window.location.reload();
+    });
+
+ 
+  });
+</script>
+    <script id="formHandlerScript">
+      document.addEventListener("DOMContentLoaded", function () {
+        const activityForm = document.getElementById("activityForm");
+        const activityTableBody = document.getElementById("activityTableBody");
+        const deleteConfirmModal = document.getElementById("deleteConfirmModal");
+        const cancelDelete = document.getElementById("cancelDelete");
+        const confirmDelete = document.getElementById("confirmDelete");
+        let activityToDelete = null;
+        function showDeleteModal(activityRow) {
+          activityToDelete = activityRow;
+          deleteConfirmModal.classList.remove("hidden");
+          deleteConfirmModal.classList.add("flex");
+        }
+        window.showDeleteModal = showDeleteModal;
+        function hideDeleteModal() {
+          deleteConfirmModal.classList.remove("flex");
+          deleteConfirmModal.classList.add("hidden");
+          activityToDelete = null;
+        }
+        function deleteActivity() {
+          if (!activityToDelete) return;
+          const durationCell = activityToDelete.querySelector("td:nth-child(2)");
+          const caloriesCell = activityToDelete.querySelector("td:nth-child(3)");
+          const activityTypeCell = activityToDelete.querySelector(".font-medium");
+          const duration = parseInt(durationCell.textContent);
+          const calories = parseInt(caloriesCell.textContent);
+          const activityType = activityTypeCell.textContent.toLowerCase();
+          const activityTypeKey = activityType === "ağırlık çalışması" ? "ağırlık" : activityType;
+          totalDuration -= duration;
+          totalCalories -= calories;
+          totalActivities -= 1;
+          document.querySelectorAll(
+            ".text-3xl.font-bold.text-gray-900",
+          )[0].innerHTML =
+            `${totalCalories} <span class="text-lg font-normal text-gray-500">kcal</span>`;
+          document.querySelectorAll(
+            ".text-3xl.font-bold.text-gray-900",
+          )[1].innerHTML =
+            `${totalDuration} <span class="text-lg font-normal text-gray-500">dakika</span>`;
+          document.querySelectorAll(
+            ".text-3xl.font-bold.text-gray-900",
+          )[2].innerHTML =
+            `${totalActivities} <span class="text-lg font-normal text-gray-500">tamamlandı</span>`;
+          for (let i = 0; i < activityData.length; i++) {
+            if (activityData[i].name === activityTypeKey) {
+              activityData[i].value -= duration;
+              if (activityData[i].value <= 0) {
+                activityData.splice(i, 1);
+              }
+              break;
+            }
+          }
+          activityChart.setOption({
+            series: [
+              {
+                data: activityData,
+              },
+            ],
+          });
+          const todayIndex = calorieData.length - 1;
+          calorieData[todayIndex] -= calories;
+          if (calorieData[todayIndex] < 0) calorieData[todayIndex] = 0;
+          calorieChart.setOption({
+            series: [
+              {
+                data: calorieData,
+              },
+            ],
+          });
+          // LocalStorage'dan da sil
+        if (typeof window.currentUser !== "undefined" && window.currentUser && window.currentUser.username) {
+  let userActivities = JSON.parse(localStorage.getItem("activities_" + window.currentUser.username)) || [];
+  userActivities = userActivities.filter(item =>
+    !(item.activityType === activityTypeKey && parseInt(item.duration) === duration && parseInt(item.calories) === calories)
+  );
+  localStorage.setItem("activities_" + window.currentUser.username, JSON.stringify(userActivities));
+}
+          activityToDelete.remove();
+          hideDeleteModal();
+          const notification = document.createElement("div");
+          notification.className =
+            "fixed top-4 right-4 bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded";
+          notification.innerHTML = "Aktivite başarıyla silindi!";
+          document.body.appendChild(notification);
+          setTimeout(() => notification.remove(), 3000);
+        }
+        cancelDelete.addEventListener("click", hideDeleteModal);
+        confirmDelete.addEventListener("click", deleteActivity);
+        function updateCharts(activityType, duration, calories) {
+          let found = false;
+          for (let i = 0; i < activityData.length; i++) {
+            if (activityData[i].name === activityType) {
+              activityData[i].value += parseInt(duration);
+              found = true;
+              break;
+            }
+          }
+          if (!found) {
+            activityData.push({
+              name: activityType,
+              value: parseInt(duration),
+            });
+          }
+          activityChart.setOption({
+            series: [
+              {
+                data: activityData,
+              },
+            ],
+          });
+          calorieData[calorieData.length - 1] += parseInt(calories);
+          calorieChart.setOption({
+            series: [
+              {
+                data: calorieData,
+              },
+            ],
+          });
+          totalCalories += parseInt(calories);
+          totalDuration += parseInt(duration);
+          totalActivities += 1;
+          document.querySelectorAll(
+            ".text-3xl.font-bold.text-gray-900",
+          )[0].innerHTML =
+            `${totalCalories} <span class="text-lg font-normal text-gray-500">kcal</span>`;
+          document.querySelectorAll(
+            ".text-3xl.font-bold.text-gray-900",
+          )[1].innerHTML =
+            `${totalDuration} <span class="text-lg font-normal text-gray-500">dakika</span>`;
+          document.querySelectorAll(
+            ".text-3xl.font-bold.text-gray-900",
+          )[2].innerHTML =
+            `${totalActivities} <span class="text-lg font-normal text-gray-500">tamamlandı</span>`;
+        }
+        window.updateCharts = updateCharts;
+        const activityIcons = {
+          koşu: {
+            icon: "ri-run-line",
+            bgColor: "bg-blue-100",
+            textColor: "text-blue-600",
+          },
+          yürüyüş: {
+            icon: "ri-walk-line",
+            bgColor: "bg-yellow-100",
+            textColor: "text-yellow-600",
+          },
+          bisiklet: {
+            icon: "ri-bike-line",
+            bgColor: "bg-green-100",
+            textColor: "text-green-600",
+          },
+          yüzme: {
+            icon: "ri-swimming-line",
+            bgColor: "bg-cyan-100",
+            textColor: "text-cyan-600",
+          },
+          yoga: {
+            icon: "ri-yoga-line",
+            bgColor: "bg-purple-100",
+            textColor: "text-purple-600",
+          },
+          pilates: {
+            icon: "ri-mental-health-line",
+            bgColor: "bg-indigo-100",
+            textColor: "text-indigo-600",
+          },
+          ağırlık: {
+            icon: "ri-boxing-line",
+            bgColor: "bg-red-100",
+            textColor: "text-red-600",
+          },
+          dans: {
+            icon: "ri-music-line",
+            bgColor: "bg-pink-100",
+            textColor: "text-pink-600",
+          },
+        };
+        window.activityIcons = activityIcons;
+        activityForm.addEventListener("submit", function (e) {
+          e.preventDefault();
+          const activityType = document.getElementById("activityType").value;
+          const duration = document.getElementById("duration").value;
+          const calories = document.getElementById("calories").value;
+          if (!activityType || !duration || !calories) {
+            const notification = document.createElement("div");
+            notification.className =
+              "fixed top-4 right-4 bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded";
+            notification.innerHTML = "Lütfen tüm alanları doldurun!";
+            document.body.appendChild(notification);
+            setTimeout(() => notification.remove(), 3000);
+            return;
+          }
+          const now = new Date();
+          const formattedDate = `${now.getDate()} ${["Ocak", "Şubat", "Mart", "Nisan", "Mayıs", "Haziran", "Temmuz", "Ağustos", "Eylül", "Ekim", "Kasım", "Aralık"][now.getMonth()]} ${now.getFullYear()}, ${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}`;
+          const iconInfo = activityIcons[activityType] || {
+            icon: "ri-question-line",
+            bgColor: "bg-gray-100",
+            textColor: "text-gray-600",
+          };
+          const newRow = document.createElement("tr");
+          newRow.innerHTML = `
+      <td class="px-4 py-3 whitespace-nowrap">
+      <div class="flex items-center">
+      <div class="w-8 h-8 flex items-center justify-center ${iconInfo.bgColor} rounded-full ${iconInfo.textColor} mr-3">
+      <i class="${iconInfo.icon}"></i>
+      </div>
+      <span class="text-sm font-medium text-gray-900">${activityType.charAt(0).toUpperCase() + activityType.slice(1)}</span>
+      </div>
+      </td>
+      <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-700">${duration} dakika</td>
+      <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-700">${calories} kcal</td>
+      <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-700">${formattedDate}</td>
+      <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-700">
+      <div class="flex space-x-2">
+      <button class="text-blue-600 hover:text-blue-800">
+      <i class="ri-edit-line"></i>
+      </button>
+      <button class="text-red-600 hover:text-red-800">
+      <i class="ri-delete-bin-line"></i>
+      </button>
+      </div>
+      </td>
+      `;
+          activityTableBody.insertBefore(newRow, activityTableBody.firstChild);
+          const deleteButton = newRow.querySelector(".text-red-600");
+          deleteButton.addEventListener("click", () => showDeleteModal(newRow));
+          updateCharts(activityType, duration, calories);
+         // ...activityForm.addEventListener("submit", function (e) { ...
+if (typeof window.currentUser !== "undefined" && window.currentUser && window.currentUser.username) {
+  let userActivities = JSON.parse(localStorage.getItem("activities_" + window.currentUser.username)) || [];
+  userActivities.unshift({
+    activityType,
+    duration,
+    calories,
+    formattedDate
+  });
+  localStorage.setItem("activities_" + window.currentUser.username, JSON.stringify(userActivities));
+}
+          const notification = document.createElement("div");
+          notification.className =
+            "fixed top-4 right-4 bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded";
+          notification.innerHTML = "Aktivite başarıyla eklendi!";
+          document.body.appendChild(notification);
+          setTimeout(() => notification.remove(), 3000);
+          activityForm.reset();
+        });
+      });
+    </script>
+  </body>
+</html>
